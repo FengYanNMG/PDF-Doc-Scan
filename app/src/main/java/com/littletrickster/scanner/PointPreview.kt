@@ -5,6 +5,7 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.Preview
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.animateOffsetAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -107,13 +111,54 @@ fun PointPreview(
                 points = foundPoints
             })
 
-        repeat(4) {
-            SimpleTargetCircle(
-                getOffset = { points.getOrNull(it)?.toOffset() },
-                horizontalOffset = horizontalOffset,
-                verticalOffset = verticalOffset,
-                scale = mScale
-            )
+//        repeat(4) {
+        //原来画的四个点
+//            SimpleTargetCircle(
+//                getOffset = { points.getOrNull(it)?.toOffset() },
+//                horizontalOffset = horizontalOffset,
+//                verticalOffset = verticalOffset,
+//                scale = mScale
+//            )
+//        }
+        //修改后画一个多边形
+        PolygonRenderer(points,horizontalOffset,verticalOffset,mScale)
+
+    }
+}
+
+@Composable
+fun PolygonRenderer(
+    points: List<Point>,
+    horizontalOffset: Float,
+    verticalOffset: Float,
+    scale: Float,
+    strokeColor: Color = Color.Red,
+    strokeWidth: Float = 8f
+) {
+    // 校验坐标点数量（需4个点）
+    if (points.size != 4) return
+
+
+
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val center = Offset(size.width / 2, size.height / 2)
+        // 创建闭合路径
+        scale(scale = 1.05f, pivot = center) {
+            val path = Path().apply {
+                moveTo(
+                    horizontalOffset + points[0].x.toFloat() * scale,
+                    verticalOffset + points[0].y.toFloat() * scale
+                )
+                points.subList(1, 4).forEach { point ->
+                    lineTo(
+                        horizontalOffset + point.x.toFloat() * scale,
+                        verticalOffset + point.y.toFloat() * scale
+                    )
+                }
+                close()
+            }
+            // 绘制边框
+            drawPath(path, strokeColor, style = Stroke(strokeWidth))
         }
 
     }
@@ -147,6 +192,6 @@ private fun SimpleTargetCircle(
             }
 
             .background(Color(255, 255, 255, 40), shape = CircleShape)
-            .size(37.dp)
-            .border(3.dp, circleColor, shape = CircleShape))
+            .size(15.dp)
+            .border(1.dp, circleColor, shape = CircleShape))
 }
